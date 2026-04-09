@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>AES Šifravimas</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.js"></script>
+</head>
+
+<body>
+
+<h2>AES Šifravimo Sistema</h2>
+
+<textarea id="text" rows="5" cols="50" placeholder="Įvesk tekstą"></textarea><br><br>
+
+<input type="text" id="key" placeholder="Slaptas raktas"><br><br>
+
+<label>Modas:</label>
+<select id="mode">
+    <option value="ECB">ECB</option>
+    <option value="CBC">CBC</option>
+    <option value="CFB">CFB</option>
+</select><br><br>
+
+<label>Rakto ilgis:</label>
+<select id="keysize">
+    <option value="128">128</option>
+    <option value="192">192</option>
+    <option value="256">256</option>
+</select><br><br>
+
+<button onclick="encrypt()">Šifruoti</button>
+<button onclick="decrypt()">Dešifruoti</button>
+<button onclick="saveFile()">Išsaugoti</button>
+
+<br><br>
+
+<textarea id="output" rows="5" cols="50" placeholder="Rezultatas"></textarea><br><br>
+
+<input type="file" onchange="loadFile(event)">
+
+<script>
+
+function getKey(key, size){
+    return CryptoJS.SHA256(key).toString().substring(0, size/4);
+}
+
+function encrypt(){
+    let text = document.getElementById("text").value;
+    let key = document.getElementById("key").value;
+    let mode = document.getElementById("mode").value;
+    let size = document.getElementById("keysize").value;
+
+    let k = getKey(key, size);
+
+    let result = CryptoJS.AES.encrypt(text, k).toString();
+
+    document.getElementById("output").value = result;
+}
+
+function decrypt(){
+    let text = document.getElementById("text").value;
+    let key = document.getElementById("key").value;
+    let size = document.getElementById("keysize").value;
+
+    let k = getKey(key, size);
+
+    let bytes = CryptoJS.AES.decrypt(text, k);
+    let result = bytes.toString(CryptoJS.enc.Utf8);
+
+    document.getElementById("output").value = result;
+}
+
+function saveFile(){
+    let data = document.getElementById("output").value;
+    let blob = new Blob([data], {type: "text/plain"});
+    let a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = "encrypted.txt";
+    a.click();
+}
+
+function loadFile(event){
+    let file = event.target.files[0];
+    let reader = new FileReader();
+
+    reader.onload = function(e){
+        document.getElementById("text").value = e.target.result;
+    };
+
+    reader.readAsText(file);
+}
+
+</script>
+
+</body>
+</html>
