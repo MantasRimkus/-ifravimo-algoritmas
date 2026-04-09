@@ -24,10 +24,6 @@ Atidarykite failą index.html bet kurioje naršyklėje (Chrome, Edge arba Firefo
 Įveskite tekstą ir slaptą raktą.
 Pasirinkite šifravimo modą ir rakto ilgį.
 Paspauskite Šifruoti arba Dešifruoti.
-Paleidimas per GitHub Pages
-
-Projektą galima atidaryti internetu šiuo adresu:
-https://MantasRimkus.github.io/-ifravimo-algoritmas/
 
 AES algoritmo paaiškinimas
 
