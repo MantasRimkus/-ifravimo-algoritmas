@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html>
+<html lang="lt">
 <head>
-    <meta charset="UTF-8">
-    <title>AES Šifravimas</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.js"></script>
+<meta charset="UTF-8">
+<title>AES Šifravimas</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.js"></script>
 </head>
 
 <body>
@@ -39,38 +39,93 @@
 <input type="file" onchange="loadFile(event)">
 
 <script>
+let lastMode = "";
+let lastKeySize = "";
+let lastIV = "";
 
-function getKey(key, size){
-    return CryptoJS.SHA256(key).toString().substring(0, size/4);
+function getKey(key, size) {
+    let hash = CryptoJS.SHA256(key).toString();
+    return CryptoJS.enc.Hex.parse(hash.substring(0, size / 4));
 }
 
-function encrypt(){
+function getMode(mode) {
+    if (mode === "ECB") return CryptoJS.mode.ECB;
+    if (mode === "CBC") return CryptoJS.mode.CBC;
+    if (mode === "CFB") return CryptoJS.mode.CFB;
+}
+
+function encrypt() {
     let text = document.getElementById("text").value;
-    let key = document.getElementById("key").value;
+    let keyText = document.getElementById("key").value;
     let mode = document.getElementById("mode").value;
     let size = document.getElementById("keysize").value;
 
-    let k = getKey(key, size);
+    if (!text || !keyText) {
+        alert("Įvesk tekstą ir raktą");
+        return;
+    }
 
-    let result = CryptoJS.AES.encrypt(text, k).toString();
+    let key = getKey(keyText, size);
+    let selectedMode = getMode(mode);
+    let iv = CryptoJS.lib.WordArray.random(16);
+
+    let options = {
+        mode: selectedMode,
+        padding: CryptoJS.pad.Pkcs7
+    };
+
+    if (mode !== "ECB") {
+        options.iv = iv;
+        lastIV = iv.toString();
+    } else {
+        lastIV = "";
+    }
+
+    let encrypted = CryptoJS.AES.encrypt(text, key, options);
+
+    lastMode = mode;
+    lastKeySize = size;
+
+    document.getElementById("output").value = encrypted.ciphertext.toString();
+}
+
+function decrypt() {
+    let cipherText = document.getElementById("output").value;
+    let keyText = document.getElementById("key").value;
+
+    if (!cipherText || !keyText) {
+        alert("Nėra šifroteksto arba rakto");
+        return;
+    }
+
+    let key = getKey(keyText, lastKeySize);
+    let selectedMode = getMode(lastMode);
+
+    let cipherParams = CryptoJS.lib.CipherParams.create({
+        ciphertext: CryptoJS.enc.Hex.parse(cipherText)
+    });
+
+    let options = {
+        mode: selectedMode,
+        padding: CryptoJS.pad.Pkcs7
+    };
+
+    if (lastMode !== "ECB") {
+        options.iv = CryptoJS.enc.Hex.parse(lastIV);
+    }
+
+    let decrypted = CryptoJS.AES.decrypt(cipherParams, key, options);
+    let result = decrypted.toString(CryptoJS.enc.Utf8);
+
+    if (!result) {
+        alert("Nepavyko dešifruoti. Patikrink raktą arba pirmiausia užšifruok tekstą.");
+        return;
+    }
 
     document.getElementById("output").value = result;
 }
 
-function decrypt(){
-    let text = document.getElementById("text").value;
-    let key = document.getElementById("key").value;
-    let size = document.getElementById("keysize").value;
-
-    let k = getKey(key, size);
-
-    let bytes = CryptoJS.AES.decrypt(text, k);
-    let result = bytes.toString(CryptoJS.enc.Utf8);
-
-    document.getElementById("output").value = result;
-}
-
-function saveFile(){
+function saveFile() {
     let data = document.getElementById("output").value;
     let blob = new Blob([data], {type: "text/plain"});
     let a = document.createElement("a");
@@ -79,17 +134,16 @@ function saveFile(){
     a.click();
 }
 
-function loadFile(event){
+function loadFile(event) {
     let file = event.target.files[0];
     let reader = new FileReader();
 
-    reader.onload = function(e){
+    reader.onload = function(e) {
         document.getElementById("text").value = e.target.result;
     };
 
     reader.readAsText(file);
 }
-
 </script>
 
 </body>
